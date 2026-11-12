@@ -1,0 +1,45 @@
+name: Build Termux-AI K.I.T.T. APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 1. Clonar repositorio base de Termux
+      uses: actions/checkout@v4
+      with:
+        repository: termux/termux-app
+        ref: v0.118.0
+
+    - name: 2. Configurar JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: 3. Configurar Android SDK y NDK
+      uses: android-actions/setup-android@v3
+      with:
+        ndk-version: '25.2.9519653'
+
+    - name: 4. Descargar e integrar llama.cpp
+      run: |
+        cd terminal-emulator/src/main/cpp
+        git clone https://github.com/ggerganov/llama.cpp.git
+
+    - name: 5. Compilar el APK con Gradle
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleRelease
+
+    - name: 6. Subir el APK resultante
+      uses: actions/upload-artifact@v4
+      with:
+        name: Termux-AI-KITT-Release
+        path: app/build/outputs/apk/release/*.apk
+        
